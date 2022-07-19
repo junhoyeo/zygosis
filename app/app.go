@@ -100,6 +100,9 @@ import (
 
 	"zygosis/docs"
 
+	nameservicemodule "zygosis/x/nameservice"
+	nameservicemodulekeeper "zygosis/x/nameservice/keeper"
+	nameservicemoduletypes "zygosis/x/nameservice/types"
 	zygosismodule "zygosis/x/zygosis"
 	zygosismodulekeeper "zygosis/x/zygosis/keeper"
 	zygosismoduletypes "zygosis/x/zygosis/types"
@@ -158,18 +161,20 @@ var (
 		vesting.AppModuleBasic{},
 		monitoringp.AppModuleBasic{},
 		zygosismodule.AppModuleBasic{},
+		nameservicemodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
 	// module account permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil,
-		distrtypes.ModuleName:          nil,
-		minttypes.ModuleName:           {authtypes.Minter},
-		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
-		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
-		govtypes.ModuleName:            {authtypes.Burner},
-		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		authtypes.FeeCollectorName:        nil,
+		distrtypes.ModuleName:             nil,
+		minttypes.ModuleName:              {authtypes.Minter},
+		stakingtypes.BondedPoolName:       {authtypes.Burner, authtypes.Staking},
+		stakingtypes.NotBondedPoolName:    {authtypes.Burner, authtypes.Staking},
+		govtypes.ModuleName:               {authtypes.Burner},
+		ibctransfertypes.ModuleName:       {authtypes.Minter, authtypes.Burner},
+		nameservicemoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -231,6 +236,8 @@ type App struct {
 	ScopedMonitoringKeeper capabilitykeeper.ScopedKeeper
 
 	ZygosisKeeper zygosismodulekeeper.Keeper
+
+	NameserviceKeeper nameservicemodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// mm is the module manager
@@ -268,6 +275,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey, monitoringptypes.StoreKey,
 		zygosismoduletypes.StoreKey,
+		nameservicemoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -397,6 +405,16 @@ func New(
 	)
 	zygosisModule := zygosismodule.NewAppModule(appCodec, app.ZygosisKeeper, app.AccountKeeper, app.BankKeeper)
 
+	app.NameserviceKeeper = *nameservicemodulekeeper.NewKeeper(
+		appCodec,
+		keys[nameservicemoduletypes.StoreKey],
+		keys[nameservicemoduletypes.MemStoreKey],
+		app.GetSubspace(nameservicemoduletypes.ModuleName),
+
+		app.BankKeeper,
+	)
+	nameserviceModule := nameservicemodule.NewAppModule(appCodec, app.NameserviceKeeper, app.AccountKeeper, app.BankKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -439,6 +457,7 @@ func New(
 		transferModule,
 		monitoringModule,
 		zygosisModule,
+		nameserviceModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -467,6 +486,7 @@ func New(
 		paramstypes.ModuleName,
 		monitoringptypes.ModuleName,
 		zygosismoduletypes.ModuleName,
+		nameservicemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -491,6 +511,7 @@ func New(
 		ibctransfertypes.ModuleName,
 		monitoringptypes.ModuleName,
 		zygosismoduletypes.ModuleName,
+		nameservicemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/endBlockers
 	)
 
@@ -520,6 +541,7 @@ func New(
 		feegrant.ModuleName,
 		monitoringptypes.ModuleName,
 		zygosismoduletypes.ModuleName,
+		nameservicemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -545,6 +567,7 @@ func New(
 		transferModule,
 		monitoringModule,
 		zygosisModule,
+		nameserviceModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()
@@ -735,6 +758,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(monitoringptypes.ModuleName)
 	paramsKeeper.Subspace(zygosismoduletypes.ModuleName)
+	paramsKeeper.Subspace(nameservicemoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
