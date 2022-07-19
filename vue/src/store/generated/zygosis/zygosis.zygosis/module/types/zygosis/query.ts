@@ -13,6 +13,12 @@ export interface QueryParamsResponse {
   params: Params | undefined;
 }
 
+export interface QueryHelloRequest {}
+
+export interface QueryHelloResponse {
+  text: string;
+}
+
 const baseQueryParamsRequest: object = {};
 
 export const QueryParamsRequest = {
@@ -110,10 +116,108 @@ export const QueryParamsResponse = {
   },
 };
 
+const baseQueryHelloRequest: object = {};
+
+export const QueryHelloRequest = {
+  encode(_: QueryHelloRequest, writer: Writer = Writer.create()): Writer {
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryHelloRequest {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseQueryHelloRequest } as QueryHelloRequest;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(_: any): QueryHelloRequest {
+    const message = { ...baseQueryHelloRequest } as QueryHelloRequest;
+    return message;
+  },
+
+  toJSON(_: QueryHelloRequest): unknown {
+    const obj: any = {};
+    return obj;
+  },
+
+  fromPartial(_: DeepPartial<QueryHelloRequest>): QueryHelloRequest {
+    const message = { ...baseQueryHelloRequest } as QueryHelloRequest;
+    return message;
+  },
+};
+
+const baseQueryHelloResponse: object = { text: "" };
+
+export const QueryHelloResponse = {
+  encode(
+    message: QueryHelloResponse,
+    writer: Writer = Writer.create()
+  ): Writer {
+    if (message.text !== "") {
+      writer.uint32(10).string(message.text);
+    }
+    return writer;
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): QueryHelloResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input;
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = { ...baseQueryHelloResponse } as QueryHelloResponse;
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          message.text = reader.string();
+          break;
+        default:
+          reader.skipType(tag & 7);
+          break;
+      }
+    }
+    return message;
+  },
+
+  fromJSON(object: any): QueryHelloResponse {
+    const message = { ...baseQueryHelloResponse } as QueryHelloResponse;
+    if (object.text !== undefined && object.text !== null) {
+      message.text = String(object.text);
+    } else {
+      message.text = "";
+    }
+    return message;
+  },
+
+  toJSON(message: QueryHelloResponse): unknown {
+    const obj: any = {};
+    message.text !== undefined && (obj.text = message.text);
+    return obj;
+  },
+
+  fromPartial(object: DeepPartial<QueryHelloResponse>): QueryHelloResponse {
+    const message = { ...baseQueryHelloResponse } as QueryHelloResponse;
+    if (object.text !== undefined && object.text !== null) {
+      message.text = object.text;
+    } else {
+      message.text = "";
+    }
+    return message;
+  },
+};
+
 /** Query defines the gRPC querier service. */
 export interface Query {
   /** Parameters queries the parameters of the module. */
   Params(request: QueryParamsRequest): Promise<QueryParamsResponse>;
+  /** Queries a list of Hello items. */
+  Hello(request: QueryHelloRequest): Promise<QueryHelloResponse>;
 }
 
 export class QueryClientImpl implements Query {
@@ -125,6 +229,12 @@ export class QueryClientImpl implements Query {
     const data = QueryParamsRequest.encode(request).finish();
     const promise = this.rpc.request("zygosis.zygosis.Query", "Params", data);
     return promise.then((data) => QueryParamsResponse.decode(new Reader(data)));
+  }
+
+  Hello(request: QueryHelloRequest): Promise<QueryHelloResponse> {
+    const data = QueryHelloRequest.encode(request).finish();
+    const promise = this.rpc.request("zygosis.zygosis.Query", "Hello", data);
+    return promise.then((data) => QueryHelloResponse.decode(new Reader(data)));
   }
 }
 
