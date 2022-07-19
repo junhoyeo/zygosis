@@ -1,0 +1,14 @@
+syntax = "proto3";
+package zygosis.zygosis;
+
+import "gogoproto/gogo.proto";
+import "zygosis/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "zygosis/x/zygosis/types";
+
+// GenesisState defines the zygosis module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  // this line is used by starport scaffolding # genesis/proto/state
+}
